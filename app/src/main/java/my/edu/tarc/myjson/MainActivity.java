@@ -1,6 +1,8 @@
 package my.edu.tarc.myjson;
 
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -25,9 +27,8 @@ import java.util.List;
 
 public class MainActivity extends ActionBarActivity {
     ListView listViewCustomer;
-    String fileUrl ="http://www.ezinfosolution.com/get_all_ca.php";
-    List<CustomerAccount> caList;
-    //ProgressDialog pDialog;
+    List<Course> caList;
+    private ProgressDialog prgDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +36,8 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         listViewCustomer = (ListView)findViewById(R.id.listView);
+
+        prgDialog = new ProgressDialog(this);
     }
 
 
@@ -54,54 +57,55 @@ public class MainActivity extends ActionBarActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_syn) {
-            readCustAccount();
+            readCourse();
+            return true;
+        }else if(id == R.id.action_insert){
+            Intent intent = new Intent(this, InsertActivity.class);
+            startActivity(intent);
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    private void readCustAccount() {
+    private void readCourse() {
         try{
             // Check availability of network connection.
             ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
             Boolean isConnected = networkInfo != null && networkInfo.isConnectedOrConnecting();
             if (isConnected) {
-                new downLoadCustAcct().execute(fileUrl);
-                loadCustAccount();
+                new downloadCourse().execute(getResources().getString(R.string.get_course_url));
             }else{
                 Toast.makeText(getApplication(), "Network is NOT available",
                         Toast.LENGTH_LONG).show();
             }
         }catch (Exception e){
             Toast.makeText(getApplication(),
-                    "Error read cust acct:"+ e.getMessage(),
+                    "Error reading record:"+ e.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
     }
 
-    private void loadCustAccount() {
-        final CustomerAccountAdapter adapter = new CustomerAccountAdapter(this, caList);
+    private void loadCourse() {
+        final CourseAdapter adapter = new CourseAdapter(this, caList);
         listViewCustomer.setAdapter(adapter);
+        Toast.makeText(getApplicationContext(), "Count :" + caList.size(), Toast.LENGTH_LONG).show();
     }
 
-    private class downLoadCustAcct extends AsyncTask<String, Void, List<CustomerAccount>>{
+    private class downloadCourse extends AsyncTask<String, Void, List<Course>>{
         // Show Progress bar before downloading Music
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
             // Shows Progress Bar Dialog and then call doInBackground method
-           /* pDialog = new ProgressDialog(getApplication());
-            pDialog.setTitle("Getting data");
-            pDialog.setMessage("Please wait ...");
-            pDialog.setIndeterminate(false);
-            pDialog.setCancelable(true);
-            pDialog.show();*/
+            prgDialog.show();
+            prgDialog.setMessage("Downloading file...");
         }
 
         @Override
-        protected List<CustomerAccount> doInBackground(String... params) {
+        protected List<Course> doInBackground(String... params) {
             HttpURLConnection urlConnection=null;
 
             try {
@@ -122,9 +126,10 @@ public class MainActivity extends ActionBarActivity {
         }
 
         @Override
-        protected void onPostExecute(List<CustomerAccount> customerAccounts) {
+        protected void onPostExecute(List<Course> customerAccounts) {
             super.onPostExecute(customerAccounts);
-            //pDialog.dismiss();
+            loadCourse();
+            prgDialog.dismiss();
         }
 
         @Override
@@ -141,8 +146,8 @@ public class MainActivity extends ActionBarActivity {
             }
         }
 
-        private List<CustomerAccount> readMessagesArray(JsonReader reader) throws IOException {
-            List<CustomerAccount> accounts = new ArrayList<CustomerAccount>();
+        private List<Course> readMessagesArray(JsonReader reader) throws IOException {
+            List<Course> accounts = new ArrayList<Course>();
 
             reader.beginArray();
             while (reader.hasNext()) {
@@ -152,18 +157,20 @@ public class MainActivity extends ActionBarActivity {
             return accounts;
         }
 
-        private CustomerAccount readMessage(JsonReader reader) throws IOException {
-            CustomerAccount cust = new CustomerAccount();
+        private Course readMessage(JsonReader reader) throws IOException {
+            Course cust = new Course();
             //List geo = null;
 
             reader.beginObject();
             while (reader.hasNext()) {
                 String name = reader.nextName();
-                if (name.equals("ca_id")) {
-                    cust.setCa_id(reader.nextString());
-                } else if (name.equals("ca_name")) {
-                    cust.setCa_name(reader.nextString());
-                } else {
+                if (name.equals("code")) {
+                    cust.setCode(reader.nextString());
+                } else if (name.equals("title")) {
+                    cust.setTitle(reader.nextString());
+                }  else if (name.equals("credit")) {
+                    cust.setCredit(Integer.parseInt(reader.nextString()));
+                }else {
                     reader.skipValue();
                 }
             }
@@ -175,9 +182,5 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Dismiss the progress bar when application is closed
-       /* if (pDialog != null) {
-            pDialog.dismiss();
-        }*/
     }
 }

@@ -4,4 +4,11 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="action_syn">Syn</string>
+    <string name="code">Code</string>
+    <string name="title">Title</string>
+    <string name="credit">Credit</string>
+    <string name="save">Save</string>
+    <string name="insert">Insert</string>
+    <string name="get_course_url">http://seekt.asia/proto/course_selectall.php</string>
+    <string name="insert_course_url">http://seekt.asia/proto/course_insert.php</string>
 </resources>
