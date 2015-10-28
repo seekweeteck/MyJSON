@@ -37,7 +37,7 @@ public class CourseAdapter extends ArrayAdapter<Course> {
 
         textViewCode.setText("Code:"+list.get(position).getCode());
         textViewTitle.setText("Title:" + list.get(position).getTitle());
-        textViewCredit.setText("Credit:"+ String.valueOf( list.get(position).getCredit()));
+        textViewCredit.setText("Credit:"+ list.get(position).getCredit());
         return rowView;
     }
 }

@@ -6,7 +6,7 @@ package my.edu.tarc.myjson;
 public class Course {
     private String code;
     private String title;
-    private int credit;
+    private String credit;
 
     public String getCode() {
         return code;
@@ -24,11 +24,11 @@ public class Course {
         this.title = title;
     }
 
-    public int getCredit() {
+    public String getCredit() {
         return credit;
     }
 
-    public void setCredit(int credit) {
+    public void setCredit(String credit) {
         this.credit = credit;
     }
 }

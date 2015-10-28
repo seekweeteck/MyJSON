@@ -169,7 +169,7 @@ public class MainActivity extends ActionBarActivity {
                 } else if (name.equals("title")) {
                     cust.setTitle(reader.nextString());
                 }  else if (name.equals("credit")) {
-                    cust.setCredit(Integer.parseInt(reader.nextString()));
+                    cust.setCredit(reader.nextString());
                 }else {
                     reader.skipValue();
                 }
