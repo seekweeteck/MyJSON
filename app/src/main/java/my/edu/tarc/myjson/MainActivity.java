@@ -14,6 +14,13 @@ import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+
+import org.json.JSONObject;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,8 +43,9 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         listViewCustomer = (ListView)findViewById(R.id.listView);
-
         prgDialog = new ProgressDialog(this);
+        String val[] =  getJSON(getResources().getString(R.string.get_course_url));
+        Toast.makeText(this,"Val is " + val, Toast.LENGTH_LONG).show();
     }
 
 
@@ -182,5 +190,26 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+    }
+
+    public String[] getJSON(String url){
+        final String[] value = new String[1];
+
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                       value[0] = response.toString();
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO Auto-generated method stub
+
+                    }
+                });
+        return value;
     }
 }
