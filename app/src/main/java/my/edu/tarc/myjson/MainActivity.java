@@ -5,29 +5,22 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.util.JsonReader;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.android.volley.Request;
+import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,17 +28,16 @@ import java.util.List;
 public class MainActivity extends ActionBarActivity {
     ListView listViewCustomer;
     List<Course> caList;
-    private ProgressDialog prgDialog;
+    private ProgressDialog pDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        listViewCustomer = (ListView)findViewById(R.id.listView);
-        prgDialog = new ProgressDialog(this);
-        String val[] =  getJSON(getResources().getString(R.string.get_course_url));
-        Toast.makeText(this,"Val is " + val, Toast.LENGTH_LONG).show();
+        listViewCustomer = (ListView) findViewById(R.id.listView);
+        pDialog = new ProgressDialog(this);
+        caList = new ArrayList<>();
     }
 
 
@@ -66,8 +58,13 @@ public class MainActivity extends ActionBarActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_syn) {
             readCourse();
+            if(caList.size()> 0){
+                loadCourse();
+            }else{
+                Toast.makeText(getApplicationContext(), "No record.", Toast.LENGTH_LONG).show();
+            }
             return true;
-        }else if(id == R.id.action_insert){
+        } else if (id == R.id.action_insert) {
             Intent intent = new Intent(this, InsertActivity.class);
             startActivity(intent);
             return true;
@@ -77,139 +74,68 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void readCourse() {
-        try{
+        try {
             // Check availability of network connection.
             ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
             Boolean isConnected = networkInfo != null && networkInfo.isConnectedOrConnecting();
             if (isConnected) {
-                new downloadCourse().execute(getResources().getString(R.string.get_course_url));
-            }else{
+                //new downloadCourse().execute(getResources().getString(R.string.get_course_url));
+               downloadCourse(this, getResources().getString(R.string.get_course_url));
+            } else {
                 Toast.makeText(getApplication(), "Network is NOT available",
                         Toast.LENGTH_LONG).show();
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             Toast.makeText(getApplication(),
-                    "Error reading record:"+ e.getMessage(),
+                    "Error reading record:" + e.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void downloadCourse(Context context, String url) {
+        //mPostCommentResponse.requestStarted();
+        RequestQueue queue = Volley.newRequestQueue(context);
+        if (!pDialog.isShowing())
+            pDialog.show();
+
+        JsonArrayRequest jsonObjectRequest = new JsonArrayRequest(url,
+                new Response.Listener<JSONArray>() {
+                    @Override
+                    public void onResponse(JSONArray response) {
+                        try{
+                            for(int i=0; i < response.length();i++){
+                                JSONObject courseResponse = (JSONObject) response.get(i);
+                                String code = courseResponse.getString("code");
+                                String title = courseResponse.getString("title");
+                                String credit = courseResponse.getString("credit");
+                                Course course = new Course();
+                                course.setCode(code);
+                                course.setTitle(title);
+                                course.setCredit(credit);
+                                caList.add(course);
+                            }
+                            if (pDialog.isShowing())
+                                pDialog.dismiss();
+                        }catch (Exception e){
+                            Toast.makeText(getApplicationContext(), "Error:" + e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError volleyError) {
+                        Toast.makeText(getApplicationContext(), "Error:" + volleyError.getMessage(), Toast.LENGTH_LONG).show();
+                        if (pDialog.isShowing())
+                            pDialog.dismiss();
+                    }
+                });
+        queue.add(jsonObjectRequest);
     }
 
     private void loadCourse() {
         final CourseAdapter adapter = new CourseAdapter(this, caList);
         listViewCustomer.setAdapter(adapter);
         Toast.makeText(getApplicationContext(), "Count :" + caList.size(), Toast.LENGTH_LONG).show();
-    }
-
-    private class downloadCourse extends AsyncTask<String, Void, List<Course>>{
-        // Show Progress bar before downloading Music
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            // Shows Progress Bar Dialog and then call doInBackground method
-            prgDialog.show();
-            prgDialog.setMessage("Downloading file...");
-        }
-
-        @Override
-        protected List<Course> doInBackground(String... params) {
-            HttpURLConnection urlConnection=null;
-
-            try {
-                URL url = new URL(params[0]);
-
-                urlConnection = (HttpURLConnection) url.openConnection();
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                readJsonStream(in);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally{
-                assert urlConnection != null;
-                urlConnection.disconnect();
-            }
-            return caList;
-        }
-
-        @Override
-        protected void onPostExecute(List<Course> customerAccounts) {
-            super.onPostExecute(customerAccounts);
-            loadCourse();
-            prgDialog.dismiss();
-        }
-
-        @Override
-        protected void onProgressUpdate(Void... values) {
-            super.onProgressUpdate(values);
-        }
-
-        private void readJsonStream(InputStream in) throws IOException {
-            JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
-            try {
-                 caList= readMessagesArray(reader);
-            } finally{
-                reader.close();
-            }
-        }
-
-        private List<Course> readMessagesArray(JsonReader reader) throws IOException {
-            List<Course> accounts = new ArrayList<Course>();
-
-            reader.beginArray();
-            while (reader.hasNext()) {
-                accounts.add(readMessage(reader));
-            }
-            reader.endArray();
-            return accounts;
-        }
-
-        private Course readMessage(JsonReader reader) throws IOException {
-            Course cust = new Course();
-            //List geo = null;
-
-            reader.beginObject();
-            while (reader.hasNext()) {
-                String name = reader.nextName();
-                if (name.equals("code")) {
-                    cust.setCode(reader.nextString());
-                } else if (name.equals("title")) {
-                    cust.setTitle(reader.nextString());
-                }  else if (name.equals("credit")) {
-                    cust.setCredit(reader.nextString());
-                }else {
-                    reader.skipValue();
-                }
-            }
-            reader.endObject();
-            return cust;
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
-    public String[] getJSON(String url){
-        final String[] value = new String[1];
-
-        JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                       value[0] = response.toString();
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // TODO Auto-generated method stub
-
-                    }
-                });
-        return value;
     }
 }
