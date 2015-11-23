@@ -8,6 +8,14 @@ public class Course {
     private String title;
     private String credit;
 
+    public Course(){};
+
+    public Course(String code, String title, String credit) {
+        this.code = code;
+        this.title = title;
+        this.credit = credit;
+    }
+
     public String getCode() {
         return code;
     }

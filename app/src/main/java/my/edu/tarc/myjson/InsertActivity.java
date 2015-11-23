@@ -1,5 +1,6 @@
 package my.edu.tarc.myjson;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.View;
@@ -7,17 +8,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class InsertActivity extends ActionBarActivity {
     Button buttonSave;
@@ -36,79 +36,61 @@ public class InsertActivity extends ActionBarActivity {
         editTextCode = (EditText) findViewById(R.id.editTextCode);
         editTextTitle = (EditText) findViewById(R.id.editTextTitle);
         editTextCredit = (EditText) findViewById(R.id.editTextCredit);
-
         Course course = new Course();
 
         course.setCode(editTextCode.getText().toString());
         course.setTitle(editTextTitle.getText().toString());
         course.setCredit(editTextCredit.getText().toString());
-        //format data to string
-        String data = getPostDataString(course);
-        //send data to server
-        makeServiceCall(data);
+        try {
+            String url = getApplicationContext().getString(R.string.insert_course_url);
+            makeServiceCall(this, url , course);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
-    public void makeServiceCall(String data) {
-        URL url;
-        String response = "";
+    public void makeServiceCall(Context context, String url, final Course course){
+        //mPostCommentResponse.requestStarted();
+        RequestQueue queue = Volley.newRequestQueue(context);
 
+        //Send data
         try {
-            url = new URL(getResources().getString(R.string.insert_course_url));
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-            conn.setReadTimeout(15000);
-            conn.setConnectTimeout(15000);
-            conn.setRequestMethod("POST");
-            conn.setDoInput(true);
-            conn.setDoOutput(true);
-
-            OutputStream os = conn.getOutputStream();
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
-            writer.write(data);
-            writer.flush();
-            writer.close();
-            os.close();
-
-            int responseCode = conn.getResponseCode();
-            if(responseCode == HttpURLConnection.HTTP_OK){
-                String line;
-                BufferedReader br = new BufferedReader((new InputStreamReader((conn.getInputStream()))));
-                while((line = br.readLine())!=null){
-                    response+=line;
+            StringRequest postRequest = new StringRequest(
+                    Request.Method.POST,
+                    url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            Toast.makeText(getApplicationContext(), "Record saved. " + response, Toast.LENGTH_LONG).show();
+                            finish();
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Toast.makeText(getApplicationContext(), "Error. " + error.toString(), Toast.LENGTH_LONG).show();
+                        }
+                    }){
+                @Override
+                protected Map<String, String> getParams() {
+                    Map<String, String> params = new HashMap<>();
+                    params.put("code", course.getCode());
+                    params.put("title", course.getTitle());
+                    params.put("credit", course.getCredit());
+                    return params;
                 }
-            }else{
-                response="";
-            }
 
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "MalformedURLException", Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
-            e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "IOException", Toast.LENGTH_SHORT).show();
-        }catch (Exception e){
-            Toast.makeText(getApplicationContext(), "Exception", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private String getPostDataString(Course course) {
-        StringBuilder result = new StringBuilder();
-
-        try {
-            result.append(URLEncoder.encode("code", "UTF-8"));
-            result.append("=");
-            result.append(URLEncoder.encode(course.getCode(), "UTF-8"));
-            result.append("&");
-            result.append(URLEncoder.encode("title", "UTF-8"));
-            result.append("=");
-            result.append(URLEncoder.encode(course.getTitle(), "UTF-8"));
-            result.append("&");
-            result.append(URLEncoder.encode("credit", "UTF-8"));
-            result.append("=");
-            result.append(URLEncoder.encode(course.getCredit(), "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    Map<String, String> params = new HashMap<>();
+                    params.put("Content-Type", "application/x-www-form-urlencoded");
+                    return params;
+                }
+            };
+            queue.add(postRequest);
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return result.toString();
     }
 }
