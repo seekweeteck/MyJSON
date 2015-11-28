@@ -58,11 +58,6 @@ public class MainActivity extends ActionBarActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_syn) {
             readCourse();
-            if(caList.size()> 0){
-                loadCourse();
-            }else{
-                Toast.makeText(getApplicationContext(), "No record.", Toast.LENGTH_LONG).show();
-            }
             return true;
         } else if (id == R.id.action_insert) {
             Intent intent = new Intent(this, InsertActivity.class);
@@ -84,26 +79,30 @@ public class MainActivity extends ActionBarActivity {
                downloadCourse(this, getResources().getString(R.string.get_course_url));
             } else {
                 Toast.makeText(getApplication(), "Network is NOT available",
-                        Toast.LENGTH_LONG).show();
+                        Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
             Toast.makeText(getApplication(),
                     "Error reading record:" + e.getMessage(),
-                    Toast.LENGTH_LONG).show();
+                    Toast.LENGTH_SHORT).show();
         }
     }
 
     private void downloadCourse(Context context, String url) {
         //mPostCommentResponse.requestStarted();
         RequestQueue queue = Volley.newRequestQueue(context);
-        if (!pDialog.isShowing())
-            pDialog.show();
 
         JsonArrayRequest jsonObjectRequest = new JsonArrayRequest(url,
                 new Response.Listener<JSONArray>() {
                     @Override
                     public void onResponse(JSONArray response) {
+                        if (!pDialog.isShowing())
+                            pDialog.show();
+
                         try{
+                            //Clear list
+                            caList.clear();
+
                             for(int i=0; i < response.length();i++){
                                 JSONObject courseResponse = (JSONObject) response.get(i);
                                 String code = courseResponse.getString("code");
@@ -115,17 +114,20 @@ public class MainActivity extends ActionBarActivity {
                                 course.setCredit(credit);
                                 caList.add(course);
                             }
+                            loadCourse();
+
                             if (pDialog.isShowing())
                                 pDialog.dismiss();
+
                         }catch (Exception e){
-                            Toast.makeText(getApplicationContext(), "Error:" + e.getMessage(), Toast.LENGTH_LONG).show();
+                            Toast.makeText(getApplicationContext(), "Error:" + e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError volleyError) {
-                        Toast.makeText(getApplicationContext(), "Error:" + volleyError.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Error:" + volleyError.getMessage(), Toast.LENGTH_SHORT).show();
                         if (pDialog.isShowing())
                             pDialog.dismiss();
                     }
@@ -136,6 +138,6 @@ public class MainActivity extends ActionBarActivity {
     private void loadCourse() {
         final CourseAdapter adapter = new CourseAdapter(this, caList);
         listViewCustomer.setAdapter(adapter);
-        Toast.makeText(getApplicationContext(), "Count :" + caList.size(), Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), "Count :" + caList.size(), Toast.LENGTH_SHORT).show();
     }
 }
