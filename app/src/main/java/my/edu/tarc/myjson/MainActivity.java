@@ -1,12 +1,12 @@
 package my.edu.tarc.myjson;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends Activity {
     ListView listViewCustomer;
     List<Course> caList;
     private ProgressDialog pDialog;
@@ -58,11 +58,6 @@ public class MainActivity extends ActionBarActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_syn) {
             readCourse();
-            if(caList.size()> 0){
-                loadCourse();
-            }else{
-                Toast.makeText(getApplicationContext(), "No record.", Toast.LENGTH_LONG).show();
-            }
             return true;
         } else if (id == R.id.action_insert) {
             Intent intent = new Intent(this, InsertActivity.class);
@@ -97,6 +92,7 @@ public class MainActivity extends ActionBarActivity {
         //mPostCommentResponse.requestStarted();
         RequestQueue queue = Volley.newRequestQueue(context);
         if (!pDialog.isShowing())
+            pDialog.setMessage("Syn with server...");
             pDialog.show();
 
         JsonArrayRequest jsonObjectRequest = new JsonArrayRequest(url,
@@ -104,6 +100,7 @@ public class MainActivity extends ActionBarActivity {
                     @Override
                     public void onResponse(JSONArray response) {
                         try{
+                            caList.clear();
                             for(int i=0; i < response.length();i++){
                                 JSONObject courseResponse = (JSONObject) response.get(i);
                                 String code = courseResponse.getString("code");
@@ -115,6 +112,7 @@ public class MainActivity extends ActionBarActivity {
                                 course.setCredit(credit);
                                 caList.add(course);
                             }
+                            loadCourse();
                             if (pDialog.isShowing())
                                 pDialog.dismiss();
                         }catch (Exception e){

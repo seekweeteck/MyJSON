@@ -1,8 +1,8 @@
 package my.edu.tarc.myjson;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,7 +19,7 @@ import com.android.volley.toolbox.Volley;
 import java.util.HashMap;
 import java.util.Map;
 
-public class InsertActivity extends ActionBarActivity {
+public class InsertActivity extends Activity {
     Button buttonSave;
 
     @Override
