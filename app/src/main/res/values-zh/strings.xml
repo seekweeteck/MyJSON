@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">My JSON</string>
+
+    <string name="hello_world">世界，你好！</string>
+    <string name="action_settings">设置</string>
+    <string name="action_syn">添加Syn</string>
+    <string name="code">代码</string>
+    <string name="title">标题</string>
+    <string name="credit">学分</string>
+    <string name="save">保存</string>
+    <string name="insert">Insert</string>
+    <string name="get_course_url">http://bait2073.comli.com/select_course.php</string>
+    <string name="insert_course_url">http://bait2073.comli.com/insert_course.php</string>
+</resources>
