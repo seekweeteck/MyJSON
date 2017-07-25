@@ -26,7 +26,7 @@ import java.util.List;
 
 
 public class MainActivity extends Activity {
-    ListView listViewCustomer;
+    ListView listViewCourse;
     List<Course> caList;
     private ProgressDialog pDialog;
 
@@ -35,9 +35,22 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        listViewCustomer = (ListView) findViewById(R.id.listView);
+        listViewCourse = (ListView) findViewById(R.id.listView);
         pDialog = new ProgressDialog(this);
         caList = new ArrayList<>();
+
+        if(!isConnected()){
+            Toast.makeText(getApplicationContext(), "No network", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private boolean isConnected() {
+        // Check availability of network connection.
+        ConnectivityManager cm =
+                (ConnectivityManager)getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 
 
@@ -70,13 +83,9 @@ public class MainActivity extends Activity {
 
     private void readCourse() {
         try {
-            // Check availability of network connection.
-            ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-            Boolean isConnected = networkInfo != null && networkInfo.isConnectedOrConnecting();
-            if (isConnected) {
+            if (isConnected()) {
                 //new downloadCourse().execute(getResources().getString(R.string.get_course_url));
-               downloadCourse(this, getResources().getString(R.string.get_course_url));
+               downloadCourse(this, getString(R.string.get_course_url));
             } else {
                 Toast.makeText(getApplication(), "Network is NOT available",
                         Toast.LENGTH_LONG).show();
@@ -95,7 +104,8 @@ public class MainActivity extends Activity {
             pDialog.setMessage("Syn with server...");
             pDialog.show();
 
-        JsonArrayRequest jsonObjectRequest = new JsonArrayRequest(url,
+        JsonArrayRequest jsonObjectRequest = new JsonArrayRequest(
+                url,
                 new Response.Listener<JSONArray>() {
                     @Override
                     public void onResponse(JSONArray response) {
@@ -133,7 +143,7 @@ public class MainActivity extends Activity {
 
     private void loadCourse() {
         final CourseAdapter adapter = new CourseAdapter(this, caList);
-        listViewCustomer.setAdapter(adapter);
+        listViewCourse.setAdapter(adapter);
         Toast.makeText(getApplicationContext(), "Count :" + caList.size(), Toast.LENGTH_LONG).show();
     }
 }

@@ -43,14 +43,14 @@ public class InsertActivity extends Activity {
         course.setCredit(editTextCredit.getText().toString());
         try {
             String url = getApplicationContext().getString(R.string.insert_course_url);
-            makeServiceCall(this, url , course);
+            makeServiceCall(this, url, course);
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(getApplicationContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
-    public void makeServiceCall(Context context, String url, final Course course){
+    public void makeServiceCall(Context context, String url, final Course course) {
         //mPostCommentResponse.requestStarted();
         RequestQueue queue = Volley.newRequestQueue(context);
 
@@ -71,7 +71,7 @@ public class InsertActivity extends Activity {
                         public void onErrorResponse(VolleyError error) {
                             Toast.makeText(getApplicationContext(), "Error. " + error.toString(), Toast.LENGTH_LONG).show();
                         }
-                    }){
+                    }) {
                 @Override
                 protected Map<String, String> getParams() {
                     Map<String, String> params = new HashMap<>();
